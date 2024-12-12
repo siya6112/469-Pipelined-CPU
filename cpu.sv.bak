@@ -1,0 +1,24 @@
+`timescale 1ns/10ps
+module cpu(clk, reset);
+	input logic clk, reset;
+	
+	logic [31:0] instruction;
+	logic [63:0] pcVal;
+	logic Reg2Loc, ALUsrc, MemToReg, RegWrite, MemWrite, BrTaken, UncondBr, shift, direction, math, srcType;
+	logic [2:0] ALUop;
+	logic negative, zero, overflow, carry_out; 
+	
+	// Fetch instruction based on PC (64-bit addr)
+	
+	datapathPC getPC (.clk, .reset, .instruction, .pcVal, .BrTaken, .UncondBr); 
+	
+	instructmem getInstr (.address(pcVal), .instruction, .clk);
+	
+	// Set the control logic for each instruction 
+	
+	control cntrl (.clk, .instruction, .Reg2Loc, .ALUsrc, .MemToReg, .RegWrite, .MemWrite, .BrTaken, .UncondBr, .ALUop, .shift, .direction, .math, .srcType, .negative, .zero, .overflow, .carry_out);
+	
+	// Set the datapath logic for each instruction 
+	
+	datapath data (.clk, .instruction, .Reg2Loc, .ALUsrc, .MemToReg, .RegWrite, .MemWrite, .BrTaken, .UncondBr, .ALUop, .shift, .direction, .math, .srcType, .negative, .zero, .overflow, .carry_out); 
+endmodule 

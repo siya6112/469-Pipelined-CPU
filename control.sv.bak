@@ -1,0 +1,186 @@
+`timescale 1ns/10ps
+module control(clk, instruction, Reg2Loc, ALUsrc, MemToReg, RegWrite, MemWrite, BrTaken, UncondBr, ALUop, shift, direction, math, srcType, negative, zero, overflow, carry_out); 
+	input logic clk;
+	input logic [31:0] instruction;
+	input logic negative, zero, overflow, carry_out; 
+	output logic Reg2Loc, ALUsrc, MemToReg, RegWrite, MemWrite, BrTaken, UncondBr, shift, direction, math, srcType;
+	output logic [2:0] ALUop; 
+	
+	logic neg, over, zerof, carryO;
+	
+	always_comb begin
+		if(instruction[31:22] == 10'b1001000100) begin // ADDI
+//			Reg2Loc <= 1'bx;
+			ALUsrc = 1'b1; 
+			MemToReg = 1'b0; 
+			RegWrite = 1'b1; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+			ALUop = 3'b010; // add
+//			shift <= 1'bx;
+//			direction <= 1'bx;
+			math = 1'b0;
+			srcType = 1'b1;
+		end else if(instruction[31:21] == 11'b10101011000) begin // ADDS
+			Reg2Loc = 1'b1; 
+			ALUsrc = 1'b0; 
+			MemToReg = 1'b0; 
+			RegWrite = 1'b1; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+			ALUop = 3'b010; // add 
+//			shift <= 1'bx;
+//			direction <= 1'bx;
+			math = 1'b0;
+			srcType = 1'b0;
+		end else if(instruction[31:26] == 6'b000101) begin // B
+//			Reg2Loc <= 1'bx; 
+//			ALUsrc <= 1'bx; 
+//			MemToReg <= 1'bx; 
+			RegWrite = 1'b0; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b1;
+			UncondBr = 1'b1;
+//			ALUop <= 3'b010;
+//			shift <= 1'bx;
+//			direction <= 1'bx;
+//			math <= 1'bx;
+//			srcType <= 1'bx;
+		end else if(instruction[31:24] == 8'b01010100 && instruction[4:0] == 5'b01011) begin // B.LT
+//			Reg2Loc <= 1'bx; 
+//			ALUsrc <= 1'bx; 
+//			MemToReg <= 1'bx; 
+			RegWrite = 1'b0; 
+			MemWrite = 1'b0; 
+			BrTaken = (neg != over); 
+			UncondBr = 1'b0;
+//			ALUop <= 3'b010;
+//			shift <= 1'bx;
+//			direction <= 1'bx;
+//			math <= 1'bx;
+//			srcType <= 1'bx;
+		end else if(instruction[31:24] == 8'b10110100) begin // CBZ
+			Reg2Loc = 1'b0; 
+			ALUsrc = 1'b0; 
+//			MemToReg <= 1'bx; 
+			RegWrite = 1'b0; 
+			MemWrite = 1'b0; 
+			BrTaken = zero;
+			UncondBr = 1'b0;
+			ALUop = 3'b000; // bypass
+//			shift <= 1'bx;
+//			direction <= 1'bx;
+//			math <= 1'bx;
+//			srcType <= 1'bx;
+		end else if(instruction[31:21] == 11'b11111000010 && instruction[11:10] == 2'b0) begin // LDUR
+//			Reg2Loc <= 1'bx; 
+			ALUsrc = 1'b1; 
+			MemToReg = 1'b1; 
+			RegWrite = 1'b1; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+			ALUop = 3'b010; // add
+//			shift <= 1'bx;
+//			direction <= 1'bx;
+			math = 1'b0;
+			srcType = 1'b0;
+		end else if(instruction[31:21] == 11'b11010011011 && instruction[20:16] == 5'b0) begin // LSL
+//			Reg2Loc <= 1'bx;
+//			ALUsrc <= 1'bx; 
+//			MemToReg <= 1'b1; 
+			RegWrite = 1'b1; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+//			ALUop <= 3'b010; // add
+			shift = 1'b1;
+			direction = 1'b0;
+			math = 1'b1;
+//			srcType <= 1'b0;
+		end else if(instruction[31:21] == 11'b11010011010 && instruction[20:16] == 5'b0) begin // LSR
+//			Reg2Loc <= 1'bx;
+//			ALUsrc <= 1'bx; 
+//			MemToReg <= 1'b1; 
+			RegWrite = 1'b1; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+//			ALUop <= 3'b010; // add
+			shift = 1'b1;
+			direction = 1'b1;
+			math = 1'b1;
+//			srcType <= 1'b0;
+		end else if(instruction[31:21] == 11'b10011011000 && instruction[15:10] == 6'h1F) begin // MUL
+			Reg2Loc = 1'b1;
+//			ALUsrc <= 1'bx; 
+//			MemToReg <= 1'b1; 
+			RegWrite = 1'b1; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+//			ALUop <= 3'b010; // add
+			shift = 1'b0;
+//			direction <= 1'b0;
+			math = 1'b1;
+//			srcType <= 1'b0;
+		end else if(instruction[31:21] == 11'b11111000000 && instruction[11:10] == 2'b0) begin // STUR
+			Reg2Loc = 1'b0;
+			ALUsrc = 1'b1; 
+//			MemToReg <= 1'b1; 
+			RegWrite = 1'b0; 
+			MemWrite = 1'b1; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+			ALUop = 3'b010; // add
+//			shift <= 1'b1;
+//			direction <= 1'b0;
+			math = 1'b0;
+			srcType = 1'b0;
+		end else if(instruction[31:21] == 11'b11101011000 && instruction[15:10] == 6'b0) begin // SUBS
+			Reg2Loc = 1'b1;
+			ALUsrc = 1'b0; 
+			MemToReg = 1'b0; 
+			RegWrite = 1'b1; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+//			UncondBr <= 1'bx;
+			ALUop = 3'b011; // sub
+//			shift <= 1'b1;
+//			direction <= 1'b0;
+			math = 1'b0;
+//			srcType <= 1'b0;
+		end else begin 			
+			Reg2Loc = 1'bx; 
+			ALUsrc = 1'bx; 
+			MemToReg = 1'bx; 
+			RegWrite = 1'b0; 
+			MemWrite = 1'b0; 
+			BrTaken = 1'b0;
+			UncondBr = 1'bx;
+			ALUop = 3'bxxx; // add
+			shift = 1'bx;
+			direction = 1'bx;
+			math = 1'bx;
+		end
+	end 
+	
+	always_ff @(posedge clk) begin 
+		if((instruction[31:21] == 11'b10101011000) || (instruction[31:21] == 11'b11101011000 && instruction[15:10] == 6'b0)) begin
+			neg <= negative;
+			over <= overflow; 
+			zerof <= zero;
+			carryO <= carry_out; 
+		end else begin 
+			neg <= neg;
+			over <= over; 
+			zerof <= zerof;
+			carryO <= carryO; 
+		end 
+	end 
+	
+	
+
+endmodule 
